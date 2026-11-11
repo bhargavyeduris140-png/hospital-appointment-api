@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { searchDoctorsBySpecialty } from "../doctors";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { asyncHandler } from "../utils/async-handler";
@@ -20,7 +21,9 @@ router.post("/", asyncHandler(async (req, res) => {
   res.status(201).json(doctor);
 }));
 
-router.get("/", asyncHandler(async (_req, res) => {
+router.get("/", asyncHandler(async (req, res) => {
+  const specialty = z.string().trim().min(1).optional().parse(req.query.specialty ?? req.query.specialization);
+  if (specialty) { res.json(await searchDoctorsBySpecialty(specialty)); return; }
   const doctors = await prisma.doctor.findMany({
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     include: { _count: { select: { appointments: true } } },
