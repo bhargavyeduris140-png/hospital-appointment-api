@@ -1,20 +1,35 @@
 import { prisma } from "../src/lib/prisma";
 
 async function main() {
-  const patient = await prisma.patient.upsert({
-    where: { email: "seed.patient@example.com" },
-    update: {},
-    create: { firstName: "Asha", lastName: "Kumar", email: "seed.patient@example.com", dateOfBirth: new Date("2000-05-12") },
+  // Reset in FK-safe order so every seed run starts from a predictable dataset.
+  await prisma.appointment.deleteMany();
+  await prisma.patient.deleteMany();
+  await prisma.doctor.deleteMany();
+
+  const patients = await prisma.patient.createMany({
+    data: [
+      { firstName: "Asha", lastName: "Kumar", email: "asha.kumar@example.com", phone: "9000000001", dateOfBirth: new Date("2000-05-12") },
+      { firstName: "Arjun", lastName: "Rao", email: "arjun.rao@example.com", phone: "9000000002", dateOfBirth: new Date("1998-09-20") },
+      { firstName: "Meera", lastName: "Shah", email: "meera.shah@example.com", phone: "9000000003", dateOfBirth: new Date("2002-01-15") },
+    ],
   });
-  const doctor = await prisma.doctor.upsert({
-    where: { email: "seed.doctor@example.com" },
-    update: {},
-    create: { firstName: "Ravi", lastName: "Shah", email: "seed.doctor@example.com", specialization: "Cardiology" },
+  const doctors = await prisma.doctor.createMany({
+    data: [
+      { firstName: "Ravi", lastName: "Shah", email: "ravi.shah@example.com", phone: "9111111111", specialization: "Cardiology" },
+      { firstName: "Neha", lastName: "Iyer", email: "neha.iyer@example.com", phone: "9222222222", specialization: "Dermatology" },
+      { firstName: "Kiran", lastName: "Das", email: "kiran.das@example.com", phone: "9333333333", specialization: "Neurology" },
+    ],
   });
-  const existing = await prisma.appointment.findFirst({ where: { patientId: patient.id, doctorId: doctor.id, reason: "Seed checkup" } });
-  if (!existing) await prisma.appointment.create({
-    data: { patientId: patient.id, doctorId: doctor.id, scheduledAt: new Date(Date.now() + 86400000), reason: "Seed checkup" },
+  const patientRows = await prisma.patient.findMany({ orderBy: { id: "asc" } });
+  const doctorRows = await prisma.doctor.findMany({ orderBy: { id: "asc" } });
+  const now = Date.now();
+  await prisma.appointment.createMany({
+    data: [
+      { patientId: patientRows[0].id, doctorId: doctorRows[0].id, scheduledAt: new Date(now + 86400000), reason: "Routine heart check" },
+      { patientId: patientRows[1].id, doctorId: doctorRows[1].id, scheduledAt: new Date(now + 172800000), reason: "Skin consultation" },
+      { patientId: patientRows[2].id, doctorId: doctorRows[2].id, scheduledAt: new Date(now + 259200000), reason: "Neurology follow-up" },
+    ],
   });
-  console.log("Seed completed: patient, doctor, appointment");
+  console.log(`Seed complete: ${patients.count} patients, ${doctors.count} doctors, 3 appointments`);
 }
-main().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => prisma.$disconnect());
+main().catch(error => { console.error("Seed failed:", error); process.exitCode = 1; }).finally(() => prisma.$disconnect());
