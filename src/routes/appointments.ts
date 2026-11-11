@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { bookAppointment, cancelAppointment, getUpcomingAppointments, updateAppointmentStatus } from "../appointments";
-import { AppointmentStatus } from "@prisma/client";
+import { AppointmentStatus } from "../generated/prisma/enums";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { asyncHandler } from "../utils/async-handler";
