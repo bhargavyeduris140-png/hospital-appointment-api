@@ -1,5 +1,5 @@
 import { prisma } from "./lib/prisma";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "./generated/prisma/client";
 
 export const createDoctor = (data: Prisma.DoctorCreateInput) => prisma.doctor.create({ data });
 export const listDoctors = () => prisma.doctor.findMany({ orderBy: [{ lastName: "asc" }, { firstName: "asc" }] });
