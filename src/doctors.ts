@@ -8,3 +8,9 @@ export const updateDoctor = (id: number, data: Prisma.DoctorUpdateInput) => pris
 export const deleteDoctor = (id: number) => prisma.doctor.delete({ where: { id } });
 export const searchDoctorsBySpecialty = (specialty: string) =>
   prisma.doctor.findMany({ where: { specialization: { contains: specialty, mode: "insensitive" } }, orderBy: { lastName: "asc" } });
+export const getUpcomingAppointmentsForDoctor = (doctorId: number, from = new Date()) =>
+  prisma.appointment.findMany({
+    where: { doctorId, scheduledAt: { gte: from }, status: "SCHEDULED" },
+    include: { patient: true, doctor: true },
+    orderBy: { scheduledAt: "asc" },
+  });
