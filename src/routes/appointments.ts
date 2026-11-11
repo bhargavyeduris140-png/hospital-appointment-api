@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { getUpcomingAppointments } from "../appointments";
 import { AppointmentStatus } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
@@ -34,6 +35,10 @@ router.get("/", asyncHandler(async (req, res) => {
     include: { patient: true, doctor: true },
   });
   res.json(appointments);
+}));
+
+router.get("/upcoming", asyncHandler(async (_req, res) => {
+  res.json(await getUpcomingAppointments());
 }));
 
 router.get("/:id", asyncHandler(async (req, res) => {
