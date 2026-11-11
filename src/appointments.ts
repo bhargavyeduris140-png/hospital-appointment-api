@@ -24,7 +24,7 @@ export const listAppointments = (status?: AppointmentStatus) =>
   prisma.appointment.findMany({ where: status ? { status } : undefined, include: { patient: true, doctor: true }, orderBy: { scheduledAt: "asc" } });
 export const getAppointment = (id: number) =>
   prisma.appointment.findUnique({ where: { id }, include: { patient: true, doctor: true } });
-export const updateAppointment = (id: number, data: Prisma.AppointmentUpdateInput) =>
+export const updateAppointment = (id: number, data: Prisma.AppointmentUncheckedUpdateInput) =>
   prisma.appointment.update({ where: { id }, data, include: { patient: true, doctor: true } });
 export const updateAppointmentStatus = (id: number, status: AppointmentStatus) =>
   prisma.appointment.update({ where: { id }, data: { status }, include: { patient: true, doctor: true } });
