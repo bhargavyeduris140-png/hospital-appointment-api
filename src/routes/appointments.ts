@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getUpcomingAppointments } from "../appointments";
+import { bookAppointment, cancelAppointment, getUpcomingAppointments, updateAppointmentStatus } from "../appointments";
 import { AppointmentStatus } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
@@ -18,10 +18,7 @@ const updateAppointmentSchema = appointmentSchema.partial();
 
 router.post("/", asyncHandler(async (req, res) => {
   const data = appointmentSchema.parse(req.body);
-  const appointment = await prisma.appointment.create({
-    data,
-    include: { patient: true, doctor: true },
-  });
+  const appointment = await bookAppointment(data);
   res.status(201).json(appointment);
 }));
 
@@ -39,6 +36,17 @@ router.get("/", asyncHandler(async (req, res) => {
 
 router.get("/upcoming", asyncHandler(async (_req, res) => {
   res.json(await getUpcomingAppointments());
+}));
+
+router.patch("/:id/status", asyncHandler(async (req, res) => {
+  const id = z.coerce.number().int().positive().parse(req.params.id);
+  const body = z.object({ status: z.nativeEnum(AppointmentStatus) }).parse(req.body);
+  res.json(await updateAppointmentStatus(id, body.status));
+}));
+
+router.post("/:id/cancel", asyncHandler(async (req, res) => {
+  const id = z.coerce.number().int().positive().parse(req.params.id);
+  res.json(await cancelAppointment(id));
 }));
 
 router.get("/:id", asyncHandler(async (req, res) => {
