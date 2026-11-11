@@ -1,0 +1,65 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Patient {
+  id           Int           @id @default(autoincrement())
+  firstName    String        @map("first_name")
+  lastName     String        @map("last_name")
+  email        String        @unique
+  phone        String?
+  dateOfBirth  DateTime?     @db.Date @map("date_of_birth")
+  createdAt    DateTime      @default(now()) @db.Timestamp(6) @map("created_at")
+  updatedAt    DateTime      @updatedAt @db.Timestamp(6) @map("updated_at")
+  appointments Appointment[]
+
+  @@index([lastName, firstName])
+  @@map("patients")
+}
+
+model Doctor {
+  id             Int           @id @default(autoincrement())
+  firstName      String        @map("first_name")
+  lastName       String        @map("last_name")
+  email          String        @unique
+  phone          String?
+  specialization String
+  createdAt      DateTime      @default(now()) @db.Timestamp(6) @map("created_at")
+  updatedAt      DateTime      @updatedAt @db.Timestamp(6) @map("updated_at")
+  appointments   Appointment[]
+
+  @@index([specialization])
+  @@map("doctors")
+}
+
+model Appointment {
+  id          Int               @id @default(autoincrement())
+  patientId   Int               @map("patient_id")
+  doctorId    Int               @map("doctor_id")
+  scheduledAt DateTime          @db.Timestamp(6) @map("scheduled_at")
+  reason      String?
+  status      AppointmentStatus @default(SCHEDULED)
+  createdAt   DateTime          @default(now()) @db.Timestamp(6) @map("created_at")
+  updatedAt   DateTime          @updatedAt @db.Timestamp(6) @map("updated_at")
+  patient     Patient           @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor      Doctor            @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+
+  @@index([patientId, scheduledAt])
+  @@index([doctorId, scheduledAt])
+  @@index([scheduledAt])
+  @@index([status])
+  @@map("appointments")
+}
