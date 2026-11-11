@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { cancelPatientAppointments } from "../patients";
+import { cancelPatientAppointments, searchPatients, updatePatientPhone } from "../patients";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { asyncHandler } from "../utils/async-handler";
@@ -21,7 +21,9 @@ router.post("/", asyncHandler(async (req, res) => {
   res.status(201).json(patient);
 }));
 
-router.get("/", asyncHandler(async (_req, res) => {
+router.get("/", asyncHandler(async (req, res) => {
+  const search = z.string().trim().min(1).optional().parse(req.query.search);
+  if (search) { res.json(await searchPatients(search)); return; }
   const patients = await prisma.patient.findMany({
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     include: { _count: { select: { appointments: true } } },
@@ -48,6 +50,12 @@ router.get("/:id", asyncHandler(async (req, res) => {
     return;
   }
   res.json(patient);
+}));
+
+router.patch("/:id/phone", asyncHandler(async (req, res) => {
+  const id = z.coerce.number().int().positive().parse(req.params.id);
+  const body = z.object({ phone: z.string().trim().min(1).max(30) }).parse(req.body);
+  res.json(await updatePatientPhone(id, body.phone));
 }));
 
 router.patch("/:id", asyncHandler(async (req, res) => {
