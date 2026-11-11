@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { searchDoctorsBySpecialty } from "../doctors";
+import { getUpcomingAppointmentsForDoctor, searchDoctorsBySpecialty } from "../doctors";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { asyncHandler } from "../utils/async-handler";
@@ -29,6 +29,13 @@ router.get("/", asyncHandler(async (req, res) => {
     include: { _count: { select: { appointments: true } } },
   });
   res.json(doctors);
+}));
+
+router.get("/:id/appointments/upcoming", asyncHandler(async (req, res) => {
+  const id = z.coerce.number().int().positive().parse(req.params.id);
+  const doctor = await prisma.doctor.findUnique({ where: { id } });
+  if (!doctor) { res.status(404).json({ error: "Doctor not found" }); return; }
+  res.json(await getUpcomingAppointmentsForDoctor(id));
 }));
 
 router.get("/:id", asyncHandler(async (req, res) => {
