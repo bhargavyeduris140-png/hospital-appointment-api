@@ -1,5 +1,6 @@
 import { prisma } from "./lib/prisma";
-import type { Prisma, AppointmentStatus } from "@prisma/client";
+import type { Prisma } from "./generated/prisma/client";
+import type { AppointmentStatus } from "./generated/prisma/enums";
 
 export interface BookAppointmentInput {
   patientId: number;
